@@ -1,0 +1,21 @@
+:root { --ink: #0F1720; --muted: #5B6670; --line: #E3E8EC; --accent: #0B8583; --accent-soft: #E6F3F2; --bg: #FFFFFF; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.55 -apple-system, "Segoe UI", Inter, Roboto, sans-serif; }
+a { color: var(--accent); }
+header { padding: 20px 24px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+header .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); font-weight: 700; font-size: 20px; }
+header .brand .badge { width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg, #0B8583, #26B0A3); display: inline-block; position: relative; }
+header .brand .badge::after { content: ""; position: absolute; left: 9px; top: 6px; width: 10px; height: 10px; border-radius: 50%; border: 3px solid #fff; }
+header nav a { margin-left: 18px; color: var(--muted); text-decoration: none; }
+main { max-width: 760px; margin: 0 auto; padding: 32px 24px 64px; }
+h1 { font-size: 34px; line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 12px; }
+h2 { font-size: 22px; margin: 36px 0 10px; }
+p.lead { font-size: 20px; color: var(--muted); }
+.card { border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; margin: 16px 0; }
+.muted { color: var(--muted); }
+small { color: var(--muted); }
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+footer { padding: 24px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; text-align: center; }
+.cta { display: inline-block; background: var(--accent); color: #fff; padding: 12px 20px; border-radius: 999px; text-decoration: none; font-weight: 600; }
+.pill { display: inline-block; background: var(--accent-soft); color: var(--accent); padding: 4px 10px; border-radius: 999px; font-size: 14px; font-weight: 600; }
