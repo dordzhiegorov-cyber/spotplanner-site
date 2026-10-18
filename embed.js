@@ -10,7 +10,8 @@
   var last = 0;
   function report() {
     var h = Math.ceil(document.getElementById("root").getBoundingClientRect().height);
-    if (h > 0 && Math.abs(h - last) > 1) {
+    // Below 80 px is a placeholder still loading (Instagram starts at 20 px): not a size to report.
+    if (h >= 80 && Math.abs(h - last) > 1) {
       last = h;
       post({ state: "ready", height: h });
     }
@@ -27,7 +28,7 @@
       var n = 0;
       var id = setInterval(function () {
         report();
-        if (++n > 20) clearInterval(id);
+        if (++n > 40) clearInterval(id);
       }, 400);
     },
   };
