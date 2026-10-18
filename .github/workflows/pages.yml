@@ -1,0 +1,41 @@
+# Deploys spotplanner.eu to GitHub Pages. The Google Places browser key is not in the repository:
+# it lives in the repository secret PLACES_KEY and is written into place-config.js at deploy time.
+# (It is still visible on the live page — browser keys are — so it is restricted to
+# https://spotplanner.eu/* and three APIs, with daily caps, in the Google Cloud console.)
+name: Deploy site
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Write the Places key into place-config.js
+        env:
+          PLACES_KEY: ${{ secrets.PLACES_KEY }}
+        run: |
+          test -n "$PLACES_KEY" || { echo "PLACES_KEY secret is empty: the Google card stays hidden"; }
+          sed -i "s|^window.SPOTPLANNER_PLACES_KEY = \".*\";|window.SPOTPLANNER_PLACES_KEY = \"${PLACES_KEY}\";|" place-config.js
+          grep -c 'SPOTPLANNER_PLACES_KEY' place-config.js
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - id: deployment
+        uses: actions/deploy-pages@v4
