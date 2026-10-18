@@ -3,4 +3,4 @@
 // "Places UI Kit" and "Places API (New)" APIs. Empty = the app shows no Google card.
 // Google Cloud project: create it under the Dutch billing account (ADR 0006), enable Places UI Kit
 // (placewidgets.googleapis.com) and Places API (New), then paste the key here and publish the site.
-window.SPOTPLANNER_PLACES_KEY = "";
+window.SPOTPLANNER_PLACES_KEY = "AIzaSyApystKvhAqRGs2uKcynqSXy4HjcPWLlVw";
