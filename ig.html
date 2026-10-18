@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Spotplanner · Instagram post</title>
+    <!--
+      One public Instagram post, shown with Instagram's own embed (embed.js) inside the Spotplanner app:
+      Instagram renders the post, its author and the link back. Spotplanner keeps only the post's
+      permalink (from the hashtag top posts of the weekly buzz run, at most 30 days) — never the image.
+      Query: ?u=https://www.instagram.com/p/<code>/
+    -->
+    <style>
+      html, body { margin: 0; padding: 0; background: transparent; }
+      #root { display: flex; justify-content: center; }
+      .instagram-media { margin: 0 !important; min-width: 300px !important; max-width: 540px; width: 100%; }
+    </style>
+    <script src="embed.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      (function () {
+        var E = window.spotplannerEmbed;
+        var u = E.params.get("u") || "";
+        var m = u.match(/^https:\/\/www\.instagram\.com\/(p|reel)\/([A-Za-z0-9_-]{5,40})\/?$/);
+        if (!m) return E.empty("params");
+        var link = "https://www.instagram.com/" + m[1] + "/" + m[2] + "/";
+        var q = document.createElement("blockquote");
+        q.className = "instagram-media";
+        q.setAttribute("data-instgrm-permalink", link + "?utm_source=ig_embed&utm_campaign=loading");
+        q.setAttribute("data-instgrm-version", "14");
+        var a = document.createElement("a");
+        a.href = link;
+        a.textContent = "View this post on Instagram";
+        q.appendChild(a);
+        document.getElementById("root").appendChild(q);
+        var s = document.createElement("script");
+        s.async = true;
+        s.src = "https://www.instagram.com/embed.js";
+        s.onload = function () { E.ready(); };
+        s.onerror = function () { E.empty("load"); };
+        document.body.appendChild(s);
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Spotplanner · place card</title>
+    <!--
+      Google's own place card for one spot, shown inside the Spotplanner app (ADR 0006).
+      Rendered entirely by Places UI Kit (gmp-place-details-compact): name, rating, photos, hours and
+      Google's attribution come from Google and are never read back by Spotplanner. The only Places API
+      call made here asks for the place id (and its location, to check the match) — the IDs-only path.
+      Query: ?name=…&lat=…&lng=…&lang=en&scheme=light|dark
+    -->
+    <style>
+      html, body { margin: 0; padding: 0; background: transparent; }
+      #root { padding: 0; }
+      gmp-place-details-compact { width: 100%; padding: 0; margin: 0; border: none; background-color: transparent; }
+    </style>
+    <script src="embed.js"></script>
+    <script src="place-config.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      (function () {
+        var E = window.spotplannerEmbed;
+        var p = E.params;
+        var name = (p.get("name") || "").slice(0, 160);
+        var lat = Number(p.get("lat")), lng = Number(p.get("lng"));
+        var lang = (p.get("lang") || "en").replace(/[^a-zA-Z-]/g, "").slice(0, 8) || "en";
+        var scheme = p.get("scheme") === "dark" ? "dark" : "light";
+        var key = window.SPOTPLANNER_PLACES_KEY;
+        if (!key) return E.empty("nokey");
+        if (!name || !isFinite(lat) || !isFinite(lng)) return E.empty("params");
+
+        function km(a, b) {
+          var r = Math.PI / 180, dLat = (b.lat - a.lat) * r, dLng = (b.lng - a.lng) * r;
+          var x = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+          return 12742 * Math.asin(Math.sqrt(x));
+        }
+
+        window.spotplannerPlaceInit = async function () {
+          try {
+            var lib = await google.maps.importLibrary("places");
+            var found = await lib.Place.searchByText({
+              textQuery: name,
+              fields: ["id", "location"],
+              locationBias: { center: { lat: lat, lng: lng }, radius: 1500 },
+              maxResultCount: 1,
+              language: lang,
+            });
+            var place = found && found.places && found.places[0];
+            if (!place || !place.id) return E.empty("notfound");
+            var where = place.location && { lat: place.location.lat(), lng: place.location.lng() };
+            if (where && km(where, { lat: lat, lng: lng }) > 3) return E.empty("far");
+            var card = document.createElement("gmp-place-details-compact");
+            card.setAttribute("orientation", "vertical");
+            card.style.colorScheme = scheme;
+            var req = document.createElement("gmp-place-details-place-request");
+            req.setAttribute("place", place.id);
+            card.appendChild(req);
+            card.appendChild(document.createElement("gmp-place-all-content"));
+            card.addEventListener("gmp-load", function () { E.ready(); });
+            card.addEventListener("gmp-error", function () { E.empty("error"); });
+            document.getElementById("root").appendChild(card);
+          } catch (e) {
+            E.empty("error");
+          }
+        };
+        var s = document.createElement("script");
+        s.async = true;
+        s.onerror = function () { E.empty("load"); };
+        s.src = "https://maps.googleapis.com/maps/api/js?key=" + encodeURIComponent(key) + "&v=weekly&loading=async&language=" + lang + "&callback=spotplannerPlaceInit";
+        document.head.appendChild(s);
+      })();
+    </script>
+  </body>
+</html>
