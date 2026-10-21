@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Confirm your email — Spotplanner</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .note { padding: 12px 14px; border-radius: 12px; background: #eef5f3; }
+  .error { background: #fdecec; color: #8a2a1f; }
+  .ok { background: #e8f1ec; color: #15130f; }
+</style>
+</head>
+<body>
+<header>
+  <a class="brand" href="/"><span class="badge"></span>Spotplanner</a>
+  <nav><a href="/support.html">Support</a><a href="/privacy.html">Privacy</a></nav>
+</header>
+<main>
+  <h1>Confirm your email</h1>
+  <p id="message" class="note">One moment, confirming your address…</p>
+  <p id="done" class="note ok" hidden>Done, your address is confirmed. Go back to the Spotplanner app: your trips start syncing on their own. You can close this page.</p>
+</main>
+<script>
+  // The API (docs/decisions/0013); the token comes in the link's hash so it never reaches a server log.
+  var API = "https://api.spotplanner.eu";
+  var token = new URLSearchParams(location.hash.replace(/^#/, "")).get("token") || "";
+  var msg = document.getElementById("message"), done = document.getElementById("done");
+  function say(text, isError) { msg.textContent = text; msg.hidden = false; msg.className = "note" + (isError ? " error" : ""); }
+  (async function () {
+    if (!token) { say("This link is missing its code. Open the latest email from Spotplanner and press its button again, or ask for a new one in the app.", true); return; }
+    try {
+      var res = await fetch(API + "/api/auth/email/confirm", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: token }) });
+      if (res.ok) { msg.hidden = true; done.hidden = false; history.replaceState(null, "", location.pathname); return; }
+      if (res.status === 400) { say("This link is no longer valid: it was already used or it expired. Ask for a new one in the app (Account → Send the email again).", true); return; }
+      if (res.status === 429) { say("Too many tries. Wait a minute and open the link again.", true); return; }
+      say("Something went wrong (" + res.status + "). Open the link again in a moment.", true);
+    } catch (err) {
+      say("No connection. Check your internet and open the link again.", true);
+    }
+  })();
+</script>
+</body>
+</html>
