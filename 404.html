@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Not found — Spotplanner</title>
+<link rel="stylesheet" href="/style.css">
+<script>
+  // The web app under /app/ is a single page: GitHub Pages has no rewrite rule, so a deep link
+  // such as /app/trips lands here. Hand it to the app's index with the path kept in the query;
+  // the app's index.html restores the URL before the bundle starts routing.
+  (function () {
+    var p = location.pathname;
+    if (p.indexOf("/app/") === 0 || p === "/app") {
+      var rest = p.replace(/^\/app\/?/, "/");
+      location.replace("/app/?r=" + encodeURIComponent(rest + location.search) + location.hash);
+    }
+  })();
+</script>
+</head>
+<body>
+<header>
+  <a class="brand" href="/"><span class="badge"></span>Spotplanner</a>
+  <nav><a href="/support.html">Support</a><a href="/privacy.html">Privacy</a></nav>
+</header>
+<main>
+  <h1>Page not found</h1>
+  <p class="muted">That link goes nowhere. <a href="/">Back to the start</a> or <a href="/app/">open the web app</a>.</p>
+</main>
+</body>
+</html>
