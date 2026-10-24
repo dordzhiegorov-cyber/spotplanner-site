@@ -10,7 +10,7 @@
       Rendered entirely by Places UI Kit (gmp-place-details-compact): name, rating, photos, hours and
       Google's attribution come from Google and are never read back by Spotplanner. The only Places API
       call made here asks for the place id (and its location, to check the match) — the IDs-only path.
-      Query: ?name=…&lat=…&lng=…&lang=en&scheme=light|dark
+      Query: ?name=…&lat=…&lng=…&lang=en&scheme=light|dark[&o=h] (o=h: the horizontal card — a photo beside the name, for a row in a list)
     -->
     <style>
       html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
@@ -30,6 +30,7 @@
         var lat = Number(p.get("lat")), lng = Number(p.get("lng"));
         var lang = (p.get("lang") || "en").replace(/[^a-zA-Z-]/g, "").slice(0, 8) || "en";
         var scheme = p.get("scheme") === "dark" ? "dark" : "light";
+        var orientation = p.get("o") === "h" ? "horizontal" : "vertical";
         var key = window.SPOTPLANNER_PLACES_KEY;
         if (!key) return E.empty("nokey");
         if (!name || !isFinite(lat) || !isFinite(lng)) return E.empty("params");
@@ -55,7 +56,7 @@
             var where = place.location && { lat: place.location.lat(), lng: place.location.lng() };
             if (where && km(where, { lat: lat, lng: lng }) > 3) return E.empty("far");
             var card = document.createElement("gmp-place-details-compact");
-            card.setAttribute("orientation", "vertical");
+            card.setAttribute("orientation", orientation);
             card.style.colorScheme = scheme;
             var req = document.createElement("gmp-place-details-place-request");
             req.setAttribute("place", place.id);
