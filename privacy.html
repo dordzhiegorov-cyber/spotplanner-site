@@ -13,25 +13,26 @@
 </header>
 <main>
   <h1>Privacy policy</h1>
-  <p class="muted">Last updated 21 October 2026. Applies to the Spotplanner app for iPhone, Android and the web at spotplanner.eu.</p>
+  <p class="muted">Last updated 25 October 2026. Applies to the Spotplanner app for iPhone, Android and the web at spotplanner.eu.</p>
 
   <h2>The short version</h2>
-  <p>Spotplanner works without an account: everything you create — your trips, your notes, the photos you add, the countries you pin, your name and home country — is stored on your device. If you choose to create an account, your trips, your world map and your profile are also kept on our server so they sync between your devices and survive a new phone; photos never leave the device. We do not sell or share anything, we run no analytics and no advertising, and you can delete your account inside the app at any time.</p>
+  <p>Spotplanner works without an account: everything you create — your trips, your notes, the photos you add, the countries you pin, your name and home country — is stored on your device. If you choose to create an account, your trips, your world map and your profile are also kept on our server so they sync between your devices and survive a new phone, together with the one photo of your own you put on each stop of a trip (other photos never leave the device). We do not sell or share anything, we run no analytics and no advertising, and you can delete your account inside the app at any time.</p>
 
   <h2>If you create an account (optional)</h2>
   <p>You can sign in with an email address and a password. Then we store, on our server:</p>
   <ul>
     <li>Your email address, a salted hash of your password (never the password itself), the name you typed, and the date the account was created.</li>
-    <li>Your trips (destination, dates, chosen spots, your own places and notes), your travel pins (countries, dates, places, notes) and your profile (home country, language, map preferences). Photos are not uploaded.</li>
+    <li>Your trips (destination, dates, chosen spots, your own places and notes), your travel pins (countries, dates, places, notes) and your profile (home country, language, map preferences).</li>
+    <li>On iPhone and Android, the photo of your own you add to a stop of a trip ("Add my photo"; one per stop for now), as a reduced copy (JPEG, at most 2048 pixels on the long side). Other photos — a trip's own photos, diary photos — are not uploaded. See "Photos" below.</li>
     <li>Sign-in sessions (which device, when) so you stay signed in, and short-lived password-reset tokens when you ask for one.</li>
   </ul>
   <p>Where: on Google Cloud in the Netherlands (<em>europe-west4</em>), encrypted in transit and at rest, with daily backups kept for 7 days. Who sees it: only the app on your devices, through your sign-in; we read it only to run the service or if you ask for help. Emails (a sign-up code, a password-reset link) are sent through Resend (EU region, Ireland), which acts as our processor and sees only your address and that message.</p>
-  <p>Deleting: "Delete account" in the account sheet removes your account, your sessions and everything synced, immediately and for good; backups expire within 7 days. The copy on your device stays until you delete the app. You can also write to <a href="mailto:hello@spotplanner.eu">hello@spotplanner.eu</a>. Legal basis under the GDPR: performance of the service you asked for (Art. 6(1)(b)); controller: Dordzhi Egorov, Netherlands.</p>
+  <p>Deleting: "Delete account" in the account sheet removes your account, your sessions and everything synced, immediately and for good; your stored photos are deleted from the bucket right after (at the latest within a few hours, if storage is briefly unavailable); backups expire within 7 days. The copy on your device stays until you delete the app. You can also write to <a href="mailto:hello@spotplanner.eu">hello@spotplanner.eu</a>. Legal basis under the GDPR: performance of the service you asked for (Art. 6(1)(b)); controller: Dordzhi Egorov, Netherlands.</p>
   <p>Without an account nothing of the above is collected, and the app keeps working the same way. The "Back up to a file" button creates a file on your device that you keep wherever you like; we never receive it.</p>
 
   <h2>What stays on your device</h2>
   <ul>
-    <li>Your trips, their dates, notes and the photos you attach to them.</li>
+    <li>Your trips, their dates, notes and the photos you attach to them (with an account, the photo of a stop is kept there too; see "Photos").</li>
     <li>Your travel pins: countries, dates, places, notes and photos in your diary.</li>
     <li>Your profile: the name you typed, your home country, your language and your map preferences.</li>
     <li>Downloaded destination packs (the list of spots for a city), so the app works offline.</li>
@@ -58,7 +59,15 @@
   <p>If you tap "Share my location" on the suggestion screen, the app reads your position once to show how far each spot is. It is used on the device only and never sent anywhere. You can decline, and the app works without it.</p>
 
   <h2>Photos</h2>
-  <p>Photos you add are copied into the app's own folder on your device. They are used only inside the app, in the pictures and videos you choose to share yourself. They are not part of the account sync and are not uploaded anywhere.</p>
+  <p>Photos you add are copied into the app's own folder on your device. They are used only inside the app, in the pictures and videos you choose to share yourself. Without an account they are not uploaded anywhere.</p>
+  <p>With an account (signed in, email address confirmed), on iPhone and Android, the one photo of your own you put on a stop of a trip is also kept in your account, so your other devices show it too:</p>
+  <ul>
+    <li>What: a reduced copy of that photo (JPEG, at most 2048 pixels on the long side), linked to your account, the trip and the spot. One photo per stop for now; a new one replaces the old one, which is deleted. Trip photos and diary photos are not uploaded.</li>
+    <li>Where: in a private storage bucket on Google Cloud in the Netherlands (<em>europe-west4</em>), encrypted in transit and at rest. It is never public.</li>
+    <li>Who can see it: only you, through the app on your signed-in devices; each download uses a link that works for a few minutes only. We do not look at your photos, use them for anything else, or share them.</li>
+    <li>How long: until you remove the photo or the trip (the copy is then deleted; a photo no trip of yours names any more is deleted after 14 days at the latest), or until you delete your account.</li>
+  </ul>
+  <p>On the web, photos you add stay in that browser tab only and are not uploaded.</p>
 
   <h2>Feedback</h2>
   <p>If you send feedback with the Feedback tab, we store your message, the kind you picked (idea, problem, other) and, to understand the note, the screen you were on, the app version, your device platform and the app language; if you are signed in, your account. It is stored on our server (Google Cloud, Netherlands) and emailed to the Spotplanner team through Resend. We keep it until it has been dealt with and then for at most 12 months; ask us to delete it sooner at <a href="mailto:hello@spotplanner.eu">hello@spotplanner.eu</a>.</p>
