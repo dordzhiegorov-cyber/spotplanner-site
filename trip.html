@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- The token is in the address: never send it on to the map tiles or the photo hosts. -->
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' https: data: blob:; connect-src https://api.spotplanner.eu https://tiles.openfreemap.org http://localhost:* http://127.0.0.1:*; worker-src blob:; child-src blob:; font-src 'self' data:; base-uri 'none'; form-action 'none'">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#FFFFFF">
+<title>Follow my trip · Spotplanner</title>
+<meta property="og:title" content="Follow my trip on Spotplanner">
+<meta property="og:description" content="The route, the stops, and the traveller's own words and photos, day by day.">
+<meta property="og:site_name" content="Spotplanner">
+<!--
+  Follow my trip (Spotplanner ADR 0024): https://spotplanner.eu/trip.html?t=<token>
+  Reads GET https://api.spotplanner.eu/api/public/trips/<token> → { snapshot, photos } and draws the trip.
+  No account, no cookies, no analytics. Map: MapLibre GL + OpenFreeMap Positron (no key), like the web app.
+  Testing: ?demo=1 renders a built-in sample; ?api=http://localhost:3000 reads a local backend (local hosts only).
+-->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.css" integrity="sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HPSvW07OIuyP7uL6jxK" crossorigin="anonymous">
+<style>
+  /* Daylight theme (design/tokens/tokens.json → themes.daylight.light). */
+  :root {
+    --surface: #FFFFFF; --sunken: #F3F5F8;
+    --ink: #0F1720; --ink-2: #566372; --ink-3: #8E9AA6;
+    --accent: #0B8583; --accent-ink: #FFFFFF; --accent-soft: rgba(11,133,131,0.10);
+    --line: rgba(15,23,32,0.08);
+    --shadow-card: 0 6px 20px rgba(15,23,32,0.08); --shadow-float: 0 12px 32px rgba(15,23,32,0.16);
+    --r-chip: 12px; --r-card: 20px; --r-pill: 999px;
+    --font: Geist, Manrope, -apple-system, "Segoe UI", Inter, Roboto, system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--surface); color: var(--ink); font: 16px/1.55 var(--font); -webkit-text-size-adjust: 100%; }
+  a { color: var(--accent); }
+  img { display: block; max-width: 100%; }
+  button { font: inherit; color: inherit; }
+
+  .bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--surface); }
+  .brand { display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--ink); font-weight: 700; font-size: 17px; }
+  .brand .badge { width: 24px; height: 24px; border-radius: 7px; background: linear-gradient(135deg, #0B8583, #26B0A3); position: relative; flex: none; }
+  .brand .badge::after { content: ""; position: absolute; left: 7px; top: 5px; width: 9px; height: 9px; border-radius: 50%; border: 2.5px solid #fff; }
+  .cta { display: inline-flex; align-items: center; gap: 6px; background: var(--accent); color: var(--accent-ink); padding: 9px 16px; border-radius: var(--r-pill); text-decoration: none; font-weight: 600; font-size: 15px; white-space: nowrap; }
+  .cta.ghost { background: var(--accent-soft); color: var(--accent); }
+
+  .layout { max-width: 1240px; margin: 0 auto; }
+  .hero { padding: 20px 16px 8px; }
+  .kicker { color: var(--accent); font-weight: 600; font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; margin: 0 0 6px; }
+  h1 { font-size: 28px; line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 8px; overflow-wrap: anywhere; }
+  .meta { color: var(--ink-2); margin: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 15px; }
+  .meta span { display: inline-flex; align-items: center; gap: 6px; }
+  .updated { color: var(--ink-3); font-size: 13px; margin: 8px 0 0; }
+
+  .mapwrap { position: relative; margin: 12px 16px 0; border-radius: var(--r-card); overflow: hidden; box-shadow: var(--shadow-card); background: var(--sunken); height: 46vh; min-height: 260px; max-height: 460px; }
+  #map { position: absolute; inset: 0; }
+  .chips { display: flex; gap: 8px; overflow-x: auto; padding: 12px 16px; scrollbar-width: none; position: sticky; top: 0; z-index: 5; background: var(--surface); border-bottom: 1px solid var(--line); }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { flex: none; border: 1px solid var(--line); background: var(--surface); border-radius: var(--r-pill); padding: 7px 14px; font-size: 14px; font-weight: 600; color: var(--ink-2); cursor: pointer; }
+  .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .chip:focus-visible, .stop:focus-visible, .shot:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+  .days { padding: 4px 16px 24px; }
+  .day { padding: 18px 0 8px; scroll-margin-top: 64px; }
+  .day + .day { border-top: 1px solid var(--line); }
+  .day-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 0 0 4px; }
+  .day-head h2 { font-size: 21px; margin: 0; letter-spacing: -0.01em; }
+  .day-head .date { color: var(--ink-2); font-size: 15px; }
+  .day-head .today { background: var(--accent-soft); color: var(--accent); border-radius: var(--r-pill); padding: 2px 10px; font-size: 13px; font-weight: 600; }
+  .day-title { color: var(--ink-2); margin: 0 0 12px; }
+
+  .entry { background: var(--sunken); border-radius: var(--r-card); padding: 14px 16px; margin: 8px 0 14px; }
+  .entry p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .shots { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-top: 12px; }
+  .entry p:empty + .shots, .shots:first-child { margin-top: 0; }
+  .shot { padding: 0; border: 0; background: var(--line); border-radius: var(--r-chip); overflow: hidden; aspect-ratio: 4 / 3; cursor: zoom-in; }
+  .shot img { width: 100%; height: 100%; object-fit: cover; }
+
+  .stops { list-style: none; margin: 0; padding: 0; position: relative; }
+  .stops::before { content: ""; position: absolute; left: 15px; top: 18px; bottom: 18px; width: 2px; background: var(--accent-soft); }
+  .stop { position: relative; display: grid; grid-template-columns: 32px 1fr 72px; gap: 12px; align-items: center; padding: 8px 0; cursor: pointer; border-radius: var(--r-chip); }
+  .stop .num { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-weight: 700; font-size: 14px; border: 3px solid var(--surface); box-shadow: 0 1px 4px rgba(15,23,32,0.25); position: relative; z-index: 1; }
+  .stop .time { color: var(--ink-2); font-size: 14px; font-variant-numeric: tabular-nums; }
+  .stop .name { font-weight: 600; overflow-wrap: anywhere; }
+  .stop .cat { color: var(--ink-3); font-size: 13px; text-transform: capitalize; }
+  .stop .thumb { width: 72px; height: 54px; border-radius: 10px; object-fit: cover; background: var(--sunken); }
+  .stop.is-focus .name { color: var(--accent); }
+  .empty-day { color: var(--ink-3); margin: 4px 0 8px; }
+
+  .foot { padding: 24px 16px 40px; text-align: center; color: var(--ink-2); border-top: 1px solid var(--line); }
+  .foot p { margin: 0 0 14px; }
+  .foot small { display: block; margin-top: 18px; color: var(--ink-3); font-size: 12px; }
+
+  .state { max-width: 520px; margin: 0 auto; padding: 64px 24px; text-align: center; }
+  .state .icon { width: 64px; height: 64px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; margin: 0 auto 18px; font-size: 28px; }
+  .state h1 { font-size: 24px; }
+  .state p { color: var(--ink-2); margin: 0 0 22px; }
+  .skeleton { padding: 20px 16px; }
+  .skeleton div { background: var(--sunken); border-radius: 10px; margin-bottom: 12px; animation: pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: 0.55; } }
+  @media (prefers-reduced-motion: reduce) { .skeleton div { animation: none; } }
+
+  .pin { width: 28px; height: 28px; border-radius: 50%; color: #fff; display: grid; place-items: center; font: 700 12px/1 var(--font); border: 2.5px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.3); cursor: pointer; }
+  .pin.is-focus { transform: scale(1.25); z-index: 3; }
+
+  .lightbox { position: fixed; inset: 0; background: rgba(15,23,32,0.92); display: none; align-items: center; justify-content: center; z-index: 50; padding: 16px; cursor: zoom-out; }
+  .lightbox.open { display: flex; }
+  .lightbox img { max-width: 100%; max-height: 100%; border-radius: 12px; object-fit: contain; }
+  .lightbox button { position: absolute; top: 12px; right: 12px; width: 44px; height: 44px; border-radius: 50%; border: 0; background: rgba(255,255,255,0.16); color: #fff; font-size: 22px; cursor: pointer; }
+
+  [hidden] { display: none !important; }
+
+  /* Wide screens: the days scroll on the left, the map stays in view on the right. */
+  @media (min-width: 900px) {
+    .hero { padding: 32px 24px 12px; }
+    h1 { font-size: 36px; }
+    .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 0 24px; padding: 0 24px; align-items: start; }
+    .grid .side { position: sticky; top: 16px; order: 2; }
+    .grid .main { order: 1; min-width: 0; }
+    .mapwrap { margin: 12px 0 0; height: calc(100vh - 32px); max-height: none; }
+    .chips { padding: 12px 0; }
+    .days { padding: 4px 0 24px; }
+    .bar { padding: 14px 24px; }
+  }
+</style>
+</head>
+<body>
+<header class="bar">
+  <a class="brand" href="/"><span class="badge" aria-hidden="true"></span>Spotplanner</a>
+  <a class="cta" href="/app/">Open in Spotplanner</a>
+</header>
+
+<div id="loading" class="skeleton" aria-busy="true" aria-label="Loading the trip">
+  <div style="height:14px;width:30%"></div>
+  <div style="height:30px;width:70%"></div>
+  <div style="height:16px;width:50%"></div>
+  <div style="height:300px;border-radius:20px"></div>
+  <div style="height:18px;width:60%"></div>
+  <div style="height:18px;width:80%"></div>
+</div>
+
+<section id="gone" class="state" hidden>
+  <div class="icon" aria-hidden="true">✈</div>
+  <h1>This trip is not shared right now</h1>
+  <p>The link may have been switched off, or the traveller made a new one. Ask them for the latest link.</p>
+  <a class="cta" href="/app/">Plan your own trip</a>
+</section>
+
+<section id="failed" class="state" hidden>
+  <div class="icon" aria-hidden="true">↻</div>
+  <h1>We could not load this trip</h1>
+  <p>Check your connection and try again.</p>
+  <button class="cta" id="retry" type="button" style="border:0;cursor:pointer">Try again</button>
+</section>
+
+<div id="trip" class="layout" hidden>
+  <section class="hero">
+    <p class="kicker">Follow my trip</p>
+    <h1 id="title"></h1>
+    <p class="meta" id="meta"></p>
+    <p class="updated" id="updated"></p>
+  </section>
+  <div class="grid">
+    <div class="side">
+      <div class="mapwrap"><div id="map" role="region" aria-label="Map of the route"></div></div>
+    </div>
+    <div class="main">
+      <nav class="chips" id="chips" aria-label="Days"></nav>
+      <div class="days" id="days"></div>
+    </div>
+  </div>
+  <footer class="foot">
+    <p>Planned with Spotplanner: the most popular spots of a place, laid out day by day.</p>
+    <a class="cta" href="/app/">Open in Spotplanner</a>
+    <small>Spot pictures from Wikimedia Commons (see each photo page for its licence) · Map © OpenFreeMap, © OpenMapTiles, data © OpenStreetMap contributors · No cookies, no tracking.</small>
+  </footer>
+</div>
+
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Photo">
+  <button type="button" id="lightbox-close" aria-label="Close">✕</button>
+  <img id="lightbox-img" alt="">
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.js" integrity="sha384-5+cfbwT0iiub6VsQAdn6yz16nr6sDiQoHx6tm4O8OVYXHYOxcffFmCJBL0dgdvGp" crossorigin="anonymous" defer></script>
+<script src="trip.js?v=1" defer></script>
+</body>
+</html>
