@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Spotplanner · device viewer</title>
+<style>
+  :root { --bg:#F3F5F8; --panel:#FFFFFF; --ink:#0F1720; --muted:#566372; --line:rgba(15,23,32,.1); --accent:#0B8583; --frame:#111418; }
+  * { box-sizing: border-box; }
+  body { margin:0; font: 14px/1.45 Geist, Inter, system-ui, sans-serif; background:var(--bg); color:var(--ink); }
+  header { position: sticky; top:0; z-index:5; display:flex; flex-wrap:wrap; gap:10px 14px; align-items:center; padding:12px 20px; background:var(--panel); border-bottom:1px solid var(--line); }
+  header h1 { font-size:15px; margin:0 8px 0 0; letter-spacing:-.2px; }
+  header label { display:flex; align-items:center; gap:6px; color:var(--muted); font-size:13px; }
+  select, input[type=text] { font: inherit; padding:6px 8px; border:1px solid var(--line); border-radius:8px; background:#fff; color:var(--ink); }
+  input[type=text] { width: 200px; }
+  .seg { display:inline-flex; background:#F3F5F8; border-radius:999px; padding:3px; }
+  .seg button { border:0; background:transparent; padding:6px 12px; border-radius:999px; font:inherit; color:var(--muted); cursor:pointer; }
+  .seg button.on { background:#fff; color:var(--ink); box-shadow:0 2px 8px rgba(15,23,32,.1); }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; }
+  .chips button, .btn { border:1px solid var(--line); background:#fff; border-radius:999px; padding:5px 11px; font:inherit; font-size:13px; cursor:pointer; color:var(--muted); }
+  .chips button.on { border-color:var(--accent); color:var(--accent); background:rgba(11,133,131,.08); }
+  .btn.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+  main { display:flex; flex-wrap:wrap; gap:28px; padding:28px 20px 60px; align-items:flex-start; }
+  figure { margin:0; display:flex; flex-direction:column; gap:10px; align-items:center; }
+  figcaption { color:var(--muted); font-size:12px; text-align:center; }
+  figcaption b { color:var(--ink); font-weight:600; display:block; font-size:13px; }
+  .dev { position:relative; background:var(--frame); box-shadow:0 20px 50px rgba(15,23,32,.22), inset 0 0 0 1px rgba(255,255,255,.08); }
+  .dev iframe { display:block; border:0; background:#fff; }
+  .dev .load { position:absolute; inset:0; margin:auto; width:140px; height:36px; border-radius:999px; background:rgba(15,23,32,.75); color:#fff; font-size:12px; display:flex; align-items:center; justify-content:center; gap:8px; z-index:3; pointer-events:none; }
+  .dev .load i { width:12px; height:12px; border:2px solid rgba(255,255,255,.35); border-top-color:#fff; border-radius:50%; animation:spin .8s linear infinite; }
+  .dev.ready .load { display:none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .phone { border-radius:48px; padding:12px; }
+  .phone iframe { border-radius:38px; }
+  .phone .island { position:absolute; top:22px; left:50%; transform:translateX(-50%); width:110px; height:32px; border-radius:20px; background:#000; z-index:2; }
+  .phone .bar { position:absolute; bottom:20px; left:50%; transform:translateX(-50%); width:120px; height:5px; border-radius:3px; background:rgba(255,255,255,.65); z-index:2; }
+  .android { border-radius:34px; padding:10px; }
+  .android iframe { border-radius:26px; }
+  .android .cam { position:absolute; top:20px; left:50%; transform:translateX(-50%); width:14px; height:14px; border-radius:50%; background:#000; z-index:2; }
+  .tablet { border-radius:30px; padding:18px; }
+  .tablet iframe { border-radius:16px; }
+  .laptop { border-radius:16px 16px 4px 4px; padding:14px 14px 18px; }
+  .laptop iframe { border-radius:6px; }
+  .laptop::after { content:""; position:absolute; left:-6%; right:-6%; bottom:-14px; height:14px; background:#2a2f36; border-radius:0 0 10px 10px; }
+  .desktop { border-radius:10px; padding:10px; }
+  .desktop iframe { border-radius:4px; }
+  .desktop::after { content:""; position:absolute; left:40%; right:40%; bottom:-44px; height:44px; background:#2a2f36; border-radius:0 0 12px 12px; }
+  .note { padding:0 20px; color:var(--muted); font-size:13px; }
+  .note code { background:#fff; border:1px solid var(--line); border-radius:6px; padding:1px 6px; }
+  .warn { margin:12px 20px 0; padding:10px 14px; border-radius:12px; background:#FFF4D6; color:#5A3E00; font-size:13px; display:none; }
+  .warn.on { display:block; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Spotplanner · device viewer</h1>
+  <label>App <input id="url" type="text" value="" placeholder="http://localhost:8082" /></label>
+  <label>Page
+    <select id="route">
+      <option value="/">Plan (home)</option>
+      <option value="/trips">Trips</option>
+      <option value="/pins">Travel pins</option>
+      <option value="/travels/new">Add a trip</option>
+    </select>
+  </label>
+  <label>Palette
+    <span class="seg" id="palette">
+      <button data-v="daylight" class="on">Daylight</button><button data-v="coral">Coral</button><button data-v="postcard">Postcard</button>
+    </span>
+  </label>
+  <label>Scheme
+    <span class="seg" id="scheme"><button data-v="light" class="on">Light</button><button data-v="dark">Dark</button></span>
+  </label>
+  <label>Zoom
+    <span class="seg" id="zoom"><button data-v="fit" class="on">Fit</button><button data-v="1">100%</button><button data-v="0.75">75%</button><button data-v="0.5">50%</button></span>
+  </label>
+  <label><input id="rotate" type="checkbox" /> Landscape</label>
+  <button class="btn" id="reload">Reload frames</button>
+  <span class="chips" id="devices"></span>
+</header>
+<div class="warn" id="warn">You are looking at the <b>development</b> server (port 8081): every frame downloads an 8 MB debug bundle, so frames take a while and feel slow. For checking the look, run <code>npm run preview</code> in the repo root and open <code>http://localhost:8082/devices.html</code> — the production build loads in about a second per frame.</div>
+<p class="note">Each frame is the live app at that device's CSS resolution, so you can click through it. Frames load one after another; pick more devices to compare side by side. Palette and scheme apply inside the frames via <code>?palette=…&amp;scheme=…</code> and are remembered per browser (<code>?palette=reset</code> forgets). The app itself defaults to Daylight · Light.</p>
+<main id="main"></main>
+<script>
+  // CSS pixel viewports (what the app actually lays out against).
+  const DEVICES = [
+    { id:"se",   name:"iPhone SE",            w:375,  h:667,  kind:"phone",   note:"2nd/3rd gen · 2x" },
+    { id:"ip16", name:"iPhone 16",            w:393,  h:852,  kind:"phone",   note:"also 15 / 14 Pro · 3x" },
+    { id:"ipm",  name:"iPhone 16 Pro Max",    w:440,  h:956,  kind:"phone",   note:"3x" },
+    { id:"px9",  name:"Pixel 9",              w:412,  h:915,  kind:"android", note:"2.625x" },
+    { id:"s24",  name:"Galaxy S24",           w:360,  h:780,  kind:"android", note:"3x" },
+    { id:"imin", name:"iPad mini",            w:744,  h:1133, kind:"tablet",  note:"8.3\" · 2x" },
+    { id:"iair", name:"iPad Air 11\"",        w:820,  h:1180, kind:"tablet",  note:"2x" },
+    { id:"ipro", name:"iPad Pro 13\"",        w:1032, h:1376, kind:"tablet",  note:"2x" },
+    { id:"mba",  name:"MacBook Air 13\"",     w:1470, h:956,  kind:"laptop",  note:"default scaled · browser window" },
+    { id:"mbp14",name:"MacBook Pro 14\"",     w:1512, h:982,  kind:"laptop",  note:"default scaled" },
+    { id:"pc14", name:"Windows laptop 14\"",  w:1536, h:864,  kind:"laptop",  note:"1920×1080 @125%" },
+    { id:"fhd",  name:"PC monitor 1080p",     w:1920, h:1080, kind:"desktop", note:"100%" },
+    { id:"qhd",  name:"PC monitor 1440p",     w:2560, h:1440, kind:"desktop", note:"100%" },
+    { id:"4k",   name:"4K monitor @150%",     w:2560, h:1440, kind:"desktop", note:"3840×2160 scaled" },
+  ];
+  const saved = (() => { try { return JSON.parse(localStorage.getItem("spotplanner.devices") || "null"); } catch { return null; } })();
+  const state = Object.assign({ url: location.origin.startsWith("http") ? location.origin : "http://localhost:8082", route:"/", palette:"daylight", scheme:"light", zoom:"fit", rotate:false, on:["ip16"] }, saved || {});
+  state.on = new Set(state.on);
+  const $ = (s) => document.querySelector(s);
+  $("#url").value = state.url;
+  $("#route").value = state.route;
+  $("#rotate").checked = state.rotate;
+  $("#warn").classList.toggle("on", /:8081$/.test(state.url));
+
+  const chips = $("#devices");
+  for (const d of DEVICES) {
+    const b = document.createElement("button"); b.textContent = d.name; b.dataset.id = d.id; b.className = state.on.has(d.id) ? "on" : "";
+    b.onclick = () => { state.on.has(d.id) ? state.on.delete(d.id) : state.on.add(d.id); b.classList.toggle("on"); render(); };
+    chips.appendChild(b);
+  }
+  for (const id of ["palette","scheme","zoom"]) {
+    const box = $("#"+id);
+    box.querySelectorAll("button").forEach((b) => { b.classList.toggle("on", b.dataset.v === state[id]); b.onclick = () => { box.querySelectorAll("button").forEach((x) => x.classList.remove("on")); b.classList.add("on"); state[id] = b.dataset.v; render(); }; });
+  }
+  $("#route").onchange = (e) => { state.route = e.target.value; render(); };
+  $("#rotate").onchange = (e) => { state.rotate = e.target.checked; render(); };
+  $("#url").onchange = (e) => { state.url = e.target.value.replace(/\/$/, ""); $("#warn").classList.toggle("on", /:8081$/.test(state.url)); render(); };
+  $("#reload").onclick = () => render();
+
+  function src() {
+    const q = new URLSearchParams({ palette: state.palette, scheme: state.scheme });
+    return `${state.url}${state.route}?${q}`;
+  }
+  function remember() {
+    try { localStorage.setItem("spotplanner.devices", JSON.stringify({ ...state, on: [...state.on] })); } catch {}
+  }
+  // Frames load one after another: the first device is usable at once instead of all of them crawling together.
+  let queue = [];
+  function pump() {
+    const next = queue.shift();
+    if (!next) return;
+    const { fr, dev } = next;
+    const done = () => { dev.classList.add("ready"); setTimeout(pump, 150); };
+    fr.addEventListener("load", done, { once: true });
+    setTimeout(() => { if (!dev.classList.contains("ready")) done(); }, 15000);
+    fr.src = src();
+  }
+  function render() {
+    remember();
+    const main = $("#main"); main.innerHTML = ""; queue = [];
+    const avail = Math.max(320, main.clientWidth - 40);
+    for (const d of DEVICES.filter((d) => state.on.has(d.id))) {
+      const landscape = state.rotate && d.kind !== "laptop" && d.kind !== "desktop";
+      const w = landscape ? d.h : d.w, h = landscape ? d.w : d.h;
+      const pad = d.kind === "tablet" ? 36 : d.kind === "phone" ? 24 : 20;
+      let scale = state.zoom === "fit" ? Math.min(1, (avail - pad) / w, (d.kind === "phone" || d.kind === "android" ? 760 : 820) / h) : Number(state.zoom);
+      const fig = document.createElement("figure");
+      const dev = document.createElement("div"); dev.className = `dev ${d.kind}`;
+      dev.style.width = `${w * scale + pad}px`; dev.style.height = `${h * scale + pad}px`;
+      dev.style.padding = `${pad / 2}px`;
+      if (d.kind === "phone") { dev.innerHTML = '<div class="island"></div><div class="bar"></div>'; }
+      if (d.kind === "android") { dev.innerHTML = '<div class="cam"></div>'; }
+      const load = document.createElement("div"); load.className = "load"; load.innerHTML = "<i></i> loading app…"; dev.appendChild(load);
+      const fr = document.createElement("iframe");
+      fr.width = w; fr.height = h; fr.title = d.name;
+      fr.style.width = `${w}px`; fr.style.height = `${h}px`; fr.style.transform = `scale(${scale})`; fr.style.transformOrigin = "top left";
+      dev.appendChild(fr);
+      const cap = document.createElement("figcaption");
+      cap.innerHTML = `<b>${d.name}</b>${w} × ${h} css px · ${d.note}${scale < 1 ? ` · shown at ${Math.round(scale * 100)}%` : ""}`;
+      fig.appendChild(dev); fig.appendChild(cap); main.appendChild(fig);
+      queue.push({ fr, dev });
+    }
+    if (!state.on.size) main.innerHTML = '<p class="note">Pick a device above.</p>';
+    pump();
+  }
+  render();
+  addEventListener("resize", () => state.zoom === "fit" && render());
+</script>
+</body>
+</html>
