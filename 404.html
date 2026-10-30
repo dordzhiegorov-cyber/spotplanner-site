@@ -3,7 +3,9 @@
   <head>
     <script>
       // spotplanner.eu/app/... before 2026-10-29: the same path at the root
-      (function () { var p = location.pathname; if (p === "/app" || p.indexOf("/app/") === 0) location.replace((p.replace(/^\/app\/?/, "/")) + location.search + location.hash); })();
+      // The target is always this origin: the rest of the path goes after location.origin + "/" with every leading slash
+      // stripped (a path such as /app//evil.example must not become the protocol-relative //evil.example).
+      (function () { var p = location.pathname; if (p === "/app" || p.indexOf("/app/") === 0) { var rest = p.replace(new RegExp("^/app/*"), "").replace(new RegExp("^/+"), ""); location.replace(location.origin + "/" + rest + location.search + location.hash); } })();
     </script>
     <meta name="robots" content="noindex">
     <meta charset="utf-8" />
