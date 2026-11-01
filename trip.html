@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <!-- The token is in the address: never send it on to the map tiles or the photo hosts. -->
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' https: data: blob:; connect-src https://api.spotplanner.eu https://tiles.openfreemap.org http://localhost:* http://127.0.0.1:*; worker-src blob:; child-src blob:; font-src 'self' data:; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/; img-src 'self' https://upload.wikimedia.org https://thumb.wikimedia.org https://storage.googleapis.com https://api.spotplanner.eu data: blob:; connect-src https://api.spotplanner.eu https://tiles.openfreemap.org; worker-src blob:; child-src blob:; font-src 'self' data:; base-uri 'none'; form-action 'none'">
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#FFFFFF">
 <title>Follow my trip · Spotplanner</title>
@@ -13,10 +13,15 @@
 <meta property="og:description" content="The route, the stops, and the traveller's own words and photos, day by day.">
 <meta property="og:site_name" content="Spotplanner">
 <!--
-  Follow my trip (Spotplanner ADR 0024): https://spotplanner.eu/trip.html?t=<token>
+  Follow my trip (Spotplanner ADR 0024): https://spotplanner.eu/trip.html#t=<token> (older links: ?t=<token>, still read).
   Reads GET https://api.spotplanner.eu/api/public/trips/<token> → { snapshot, photos } and draws the trip.
   No account, no cookies, no analytics. Map: MapLibre GL + OpenFreeMap Positron (no key), like the web app.
-  Testing: ?demo=1 renders a built-in sample; ?api=http://localhost:3000 reads a local backend (local hosts only).
+  CSP: scripts and styles only from this site and the pinned MapLibre folder on jsDelivr (with SRI); pictures only from
+  Wikimedia (spot photos), Google Cloud Storage (signed blog-photo links) and the API (its filesystem storage driver);
+  data: and blob: for MapLibre's controls and worker.
+  Testing: ?demo=1 renders a built-in sample. Against a local backend: serve site/ from a local host (e.g.
+  `npx serve site`), open trip.html?api=http://localhost:3000#t=<token> — ?api= is honoured only when the page itself is
+  on a local host — and, in that local copy only, add http://localhost:3000 to connect-src and img-src. Never publish that.
 -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.css" integrity="sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HPSvW07OIuyP7uL6jxK" crossorigin="anonymous">
 <style>
@@ -181,6 +186,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.js" integrity="sha384-5+cfbwT0iiub6VsQAdn6yz16nr6sDiQoHx6tm4O8OVYXHYOxcffFmCJBL0dgdvGp" crossorigin="anonymous" defer></script>
-<script src="trip.js?v=1" defer></script>
+<script src="trip.js?v=2" defer></script>
 </body>
 </html>

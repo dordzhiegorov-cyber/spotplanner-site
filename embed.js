@@ -5,6 +5,7 @@
   function post(msg) {
     var m = JSON.stringify(Object.assign({ type: "spotplanner-embed" }, msg));
     if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(m);
+    // "*" on purpose: the frame may be sandboxed with an opaque origin, and the message carries only a state and a height.
     else if (window.parent !== window) window.parent.postMessage(m, "*");
   }
   var last = 0;

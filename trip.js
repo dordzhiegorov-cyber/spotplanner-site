@@ -14,21 +14,37 @@
   var REFRESH_MS = 5 * 60 * 1000;
 
   var params = new URLSearchParams(location.search);
-  var token = (params.get("t") || "").trim();
+  // The app links with the token in the fragment (#t=…), which the browser never sends to the web server, so it stays
+  // out of the host's logs. Links made before that carry it in the query (?t=…) and keep working.
+  function hashToken() {
+    return (new URLSearchParams(location.hash.replace(/^#/, "")).get("t") || "").trim();
+  }
+  var token = hashToken() || (params.get("t") || "").trim();
   var demo = params.get("demo") === "1";
   var api = apiBase(params.get("api"));
+  // A new link pasted into the same tab changes only the fragment: no page load, so load it ourselves.
+  window.addEventListener("hashchange", function () {
+    var next = hashToken();
+    if (next && next !== token) location.reload();
+  });
 
   var state = { data: null, selected: "all", map: null, mapReady: false, markers: [], loadedAt: 0, focus: null };
   var $ = function (id) { return document.getElementById(id); };
 
-  /** `?api=` is for testing against a local backend only, so a crafted link cannot put someone else's content on this page. */
+  function isLocalHost(h) {
+    return h === "localhost" || h === "127.0.0.1" || h === "[::1]" || /\.localhost$/.test(h);
+  }
+
+  /**
+   * `?api=` is for testing against a local backend only: it is honoured only when this page itself is served from a
+   * local host, and only for a local backend, so a crafted link cannot put someone else's content on spotplanner.eu.
+   * (The published page's CSP allows only api.spotplanner.eu anyway; see the comment in trip.html.)
+   */
   function apiBase(value) {
-    if (!value) return DEFAULT_API;
+    if (!value || !isLocalHost(location.hostname)) return DEFAULT_API;
     try {
       var u = new URL(value);
-      var h = u.hostname;
-      var local = h === "localhost" || h === "127.0.0.1" || h === "[::1]" || /\.localhost$/.test(h);
-      if (local && (u.protocol === "http:" || u.protocol === "https:")) return u.origin;
+      if (isLocalHost(u.hostname) && (u.protocol === "http:" || u.protocol === "https:")) return u.origin;
     } catch (e) { /* fall through */ }
     return DEFAULT_API;
   }
